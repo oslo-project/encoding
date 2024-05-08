@@ -25,6 +25,10 @@
 		"base64",
 		"base64url"
 	],
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/oslo-project/encoding"
+	},
 	"author": "pilcrowOnPaper",
 	"license": "MIT",
 	"devDependencies": {
