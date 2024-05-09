@@ -1,0 +1,28 @@
+{
+	"name": "@oslojs/encoding",
+	"description": "Encode binary data with hex, base32, and base64.",
+	"domain": "https://encoding.oslojs.dev",
+	"twitter": "@pilcrowonpaper",
+	"sidebar": [
+		{
+			"title": "Examples",
+			"pages": [
+				["Hex encoding", "/examples/hex"],
+				["Base64 and Base32 encoding", "/examples/base64-base32"]
+			]
+		},
+		{
+			"title": "API reference",
+			"pages": [["@oslojs/encoding", "/reference/main"]]
+		},
+		{
+			"title": "Links",
+			"pages": [
+				["GitHub", "https://github.com/oslo-project/encoding"],
+				["Oslo", "https://oslojs.dev"],
+				["Twitter", "https://twitter.com/pilcrowonpaper"],
+				["Donate", "https://github.com/sponsors/pilcrowOnPaper"]
+			]
+		}
+	]
+}
