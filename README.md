@@ -1,5 +1,7 @@
 # @oslojs/encoding
 
+**Documentation: https://encoding.oslojs.dev**
+
 A JavaScript library for encoding and decoding data with hexadecimal, base32, base32hex, base64, and base64url schemes.
 
 - Runtime-agnostic
