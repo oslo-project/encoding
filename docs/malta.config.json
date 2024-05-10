@@ -3,6 +3,7 @@
 	"description": "Encode binary data with hex, base32, and base64.",
 	"domain": "https://encoding.oslojs.dev",
 	"twitter": "@pilcrowonpaper",
+	"asset_hashing": true,
 	"sidebar": [
 		{
 			"title": "Examples",
