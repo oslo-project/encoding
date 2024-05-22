@@ -4,7 +4,7 @@
 	"version": "0.2.0",
 	"description": "Runtime-agnostic library for encoding and decoding data",
 	"scripts": {
-		"build": "rm -rf dist/* && tsc --project tsconfig.build.json",
+		"build": "rm -rf dist/* && tsc",
 		"format": "prettier -w .",
 		"lint": "eslint src",
 		"test": "vitest run --sequence.concurrent"
