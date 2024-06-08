@@ -15,7 +15,7 @@ import { base64 } from "@oslojs/encoding";
 
 const data: Uint8Array = new TextEncoder().encode("hello world");
 const encoded = base64.encode(data);
-const decoded = base64.decode(encoded);
+const decoded = base64.decodeIgnorePadding(encoded);
 ```
 
 Alongside [`@oslojs/binary`](https://binary.oslojs.dev) and [`@oslojs/crypto`](https://crypto.oslojs.dev), it aims to provide a basic toolbox for implementing auth and auth-related standards.

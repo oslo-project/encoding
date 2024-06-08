@@ -10,5 +10,5 @@ Implements Base 64 encoding based on [RFC 4648 §4](https://datatracker.ietf.org
 import { base64 } from "oslo/encoding";
 
 const encoded = base64.encode(message);
-const decoded = base64.decode(encoded);
+const decoded = base64.decodeIgnorePadding(encoded);
 ```

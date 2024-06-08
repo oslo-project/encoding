@@ -18,8 +18,10 @@ function constructor(alphabet: string): this;
 
 ## Methods
 
-- [`decode()`](/reference/main/Base32Encoding/decode)
+- [`decodeIgnorePadding()`](/reference/main/Base32Encoding/decode)
+- [`decode()`](/reference/main/Base32Encoding/decodeRequirePadding)
 - [`encode()`](/reference/main/Base32Encoding/encode)
+- [`encodeNoPadding()`](/reference/main/Base32Encoding/encodeNoPadding)
 
 ## Example
 
@@ -28,5 +30,5 @@ import { Base32Encoding } from "oslo/encoding";
 
 const base32 = new Base32Encoding("ABCDEFGHIJKLMNOPQRSTUVWXYZ234567");
 const encoded = base32.encode(data);
-const decoded = base32.decode(encoded);
+const decoded = base32.decodeIgnorePadding(encoded);
 ```

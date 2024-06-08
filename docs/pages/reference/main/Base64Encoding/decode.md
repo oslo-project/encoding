@@ -4,21 +4,16 @@ title: "Base64Encoding.decode()"
 
 # `Base64Encoding.decode()`
 
-Decodes a base 64 encoded string. By default, strict mode is enabled and the encoded string must include padding. Throws if the encoded string is malformed.
+Decodes a base 64 encoded string. Input must have proper padding.
+
+Throws an `Error` if the data is invalid or missing padding.
 
 ## Definition
 
 ```ts
-function decode(
-	data: string,
-	options?: {
-		strict?: boolean;
-	}
-): Uint8Array;
+function decode(data: string): Uint8Array;
 ```
 
 ### Parameters
 
 - `data`
-- `options`
-  - `strict` (default: `true`): Requires the input to have padding

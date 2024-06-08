@@ -18,8 +18,10 @@ function constructor(alphabet: string): this;
 
 ## Methods
 
-- [`decode()`](/reference/main/Base64Encoding/decode)
+- [`decodeIgnorePadding()`](/reference/main/Base64Encoding/decode)
+- [`decode()`](/reference/main/Base64Encoding/decodeRequirePadding)
 - [`encode()`](/reference/main/Base64Encoding/encode)
+- [`encodeNoPadding()`](/reference/main/Base64Encoding/encodeNoPadding)
 
 ## Example
 
@@ -30,5 +32,5 @@ const base64 = new Base64Encoding(
 	"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
 );
 const encoded = base64.encode(data);
-const decoded = base64.decode(encoded);
+const decoded = base64.decodeIgnorePadding(encoded);
 ```

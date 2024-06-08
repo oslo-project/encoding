@@ -25,12 +25,16 @@ export class Base64Encoding implements Encoding {
 		}
 	}
 
-	public encode(
-		data: Uint8Array,
-		options?: {
-			includePadding?: boolean;
+	public encode(data: Uint8Array): string {
+		let result = this.encodeNoPadding(data);
+		const padCount = (4 - (result.length % 4)) % 4;
+		for (let i = 0; i < padCount; i++) {
+			result += "=";
 		}
-	): string {
+		return result;
+	}
+
+	public encodeNoPadding(data: Uint8Array): string {
 		let result = "";
 		let buffer = 0;
 		let shift = 0;
@@ -45,29 +49,20 @@ export class Base64Encoding implements Encoding {
 		if (shift > 0) {
 			result += this.alphabet[(buffer << (6 - shift)) & 0x3f];
 		}
-		const includePadding = options?.includePadding ?? true;
-		if (includePadding) {
-			const padCount = (4 - (result.length % 4)) % 4;
-			for (let i = 0; i < padCount; i++) {
-				result += "=";
-			}
-		}
 		return result;
 	}
 
-	public decode(
-		data: string,
-		options?: {
-			strict?: boolean;
-		}
-	): Uint8Array {
-		const strict = options?.strict ?? true;
+	public decodeIgnorePadding(data: string): Uint8Array {
 		const chunkCount = Math.ceil(data.length / 4);
 		const result: number[] = [];
 		for (let i = 0; i < chunkCount; i++) {
 			let padCount = 0;
 			let buffer = 0;
 			for (let j = 0; j < 4; j++) {
+				if (i * 4 + j >= data.length) {
+					padCount += 1;
+					continue;
+				}
 				const encoded = data[i * 4 + j];
 				if (encoded === "=") {
 					if (i + 1 !== chunkCount) {
@@ -76,12 +71,46 @@ export class Base64Encoding implements Encoding {
 					padCount += 1;
 					continue;
 				}
-				if (encoded === undefined) {
-					if (strict) {
-						throw new Error("Invalid data");
+				if (padCount > 0) {
+					throw new Error(`Invalid character: ${encoded}`);
+				}
+				const value = this.decodeMap.get(encoded) ?? null;
+				if (value === null) {
+					throw new Error(`Invalid character: ${encoded}`);
+				}
+				buffer += value << (6 * (3 - j));
+			}
+			result.push((buffer >> 16) & 0xff);
+			if (padCount < 2) {
+				result.push((buffer >> 8) & 0xff);
+			}
+			if (padCount < 1) {
+				result.push(buffer & 0xff);
+			}
+		}
+		return Uint8Array.from(result);
+	}
+
+	public decode(data: string): Uint8Array {
+		const chunkCount = Math.ceil(data.length / 4);
+		const result: number[] = [];
+		for (let i = 0; i < chunkCount; i++) {
+			let padCount = 0;
+			let buffer = 0;
+			for (let j = 0; j < 4; j++) {
+				if (i * 4 + j >= data.length) {
+					throw new Error("Missing padding");
+				}
+				const encoded = data[i * 4 + j];
+				if (encoded === "=") {
+					if (i + 1 !== chunkCount) {
+						throw new Error(`Invalid character: ${encoded}`);
 					}
 					padCount += 1;
 					continue;
+				}
+				if (padCount > 0) {
+					throw new Error(`Invalid character: ${encoded}`);
 				}
 				const value = this.decodeMap.get(encoded) ?? null;
 				if (value === null) {

@@ -4,21 +4,14 @@ title: "Base64Encoding.encode()"
 
 # `Base64Encoding.encode()`
 
-Encodes data. Includes padding by default.
+Encodes data with padding.
 
 ## Definition
 
 ```ts
-function encode(
-	data: Uint8Array,
-	options?: {
-		includePadding?: boolean;
-	}
-): string;
+function encode(data: Uint8Array): string;
 ```
 
 ### Parameters
 
 - `data`
-- `options`
-  - `includePadding` (default: `true`)

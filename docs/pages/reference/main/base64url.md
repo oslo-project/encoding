@@ -10,5 +10,5 @@ Implements Base 64 URL encoding based on [RFC 4648 §5](https://datatracker.ietf
 import { base64url } from "oslo/encoding";
 
 const encoded = base64url.encode(message);
-const decoded = base64url.decode(encoded);
+const decoded = base64url.decodeIgnorePadding(encoded);
 ```
