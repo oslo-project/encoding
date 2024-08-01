@@ -1,5 +1,9 @@
 # @oslojs/encoding
 
+## 0.4.1
+
+- Remove redundant code.
+
 ## 0.4.0
 
 - [Breaking] Replace `base64`, `bas64url`, and `base32`

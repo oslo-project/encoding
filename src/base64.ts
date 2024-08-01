@@ -69,9 +69,6 @@ function decodeBase64_internal(
 	const result = new Uint8Array(Math.ceil(encoded.length / 4) * 3);
 	let totalBytes = 0;
 	for (let i = 0; i < encoded.length; i += 4) {
-		if (totalBytes % 3 !== 0) {
-			throw new Error("Invalid padding");
-		}
 		let chunk = 0;
 		let bitsRead = 0;
 		for (let j = 0; j < 4; j++) {

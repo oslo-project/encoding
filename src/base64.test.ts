@@ -54,4 +54,8 @@ test("decodeBase64() throws on invalid padding", () => {
 	expect(() => decodeBase64("q===")).toThrowError();
 	expect(() => decodeBase64("====")).toThrowError();
 	expect(() => decodeBase64("=")).toThrowError();
+	expect(() => decodeBase64("q=q=")).toThrowError();
+	expect(() => decodeBase64("qqqqq===")).toThrowError();
+	expect(() => decodeBase64("qqqq====")).toThrowError();
+	expect(() => decodeBase64("qqqqq=qq")).toThrowError();
 });

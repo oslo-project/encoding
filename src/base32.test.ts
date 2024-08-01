@@ -60,4 +60,8 @@ test("decodeBase32() throws on invalid padding", () => {
 	expect(() => decodeBase32("V=======")).toThrowError();
 	expect(() => decodeBase32("========")).toThrowError();
 	expect(() => decodeBase32("=")).toThrowError();
+	expect(() => decodeBase32("V=VKVKVK")).toThrowError();
+	expect(() => decodeBase32("VKVKVKVK========")).toThrowError();
+	expect(() => decodeBase32("VKVKVKVKV=VKVKVK")).toThrowError();
+	expect(() => decodeBase32("VKVKVKVKV=======")).toThrowError();
 });
