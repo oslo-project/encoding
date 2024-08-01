@@ -1,67 +1,57 @@
-import { describe, expect, test } from "vitest";
-import { base64 } from "./base64.js";
+import { expect, test } from "vitest";
+import {
+	decodeBase64,
+	decodeBase64IgnorePadding,
+	encodeBase64,
+	encodeBase64NoPadding
+} from "./base64.js";
 
-describe("Base64Encoding", () => {
-	test("Base64Encoding.encode()", () => {
-		const cases = [0, 1, 2, 3, 4, 5, 6];
-		for (const length of cases) {
-			const data = crypto.getRandomValues(new Uint8Array(length));
-			expect(base64.encode(data)).toBe(Buffer.from(data).toString("base64"));
-		}
-	});
+test("encodeBase64()", () => {
+	expect(encodeBase64(new Uint8Array())).toBe("");
+	for (let i = 1; i <= 100; i++) {
+		const bytes = new Uint8Array(i);
+		crypto.getRandomValues(bytes);
+		expect(encodeBase64(bytes)).toBe(Buffer.from(bytes).toString("base64"));
+	}
+});
 
-	test("Base64Encoding.encodeNoPadding()", () => {
-		const cases = [0, 1, 2, 3, 4, 5, 6];
-		for (const length of cases) {
-			const data = crypto.getRandomValues(new Uint8Array(length));
-			expect(base64.encodeNoPadding(data)).toBe(
-				Buffer.from(data).toString("base64").replaceAll("=", "")
-			);
-		}
-	});
+test("encodeBase64NoPadding()", () => {
+	expect(encodeBase64(new Uint8Array())).toBe("");
+	for (let i = 1; i <= 100; i++) {
+		const bytes = new Uint8Array(i);
+		crypto.getRandomValues(bytes);
+		expect(encodeBase64NoPadding(bytes)).toBe(encodeBase64(bytes).replaceAll("=", ""));
+	}
+});
 
-	describe("Base64Encoding.decodeIgnorePadding()", () => {
-		test("Returns encoded data", () => {
-			const cases = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
-			for (const length of cases) {
-				const data = crypto.getRandomValues(new Uint8Array(length));
-				const encoded = base64.encode(data);
-				expect(base64.decodeIgnorePadding(encoded)).toStrictEqual(data);
-			}
-		});
+test("decodeBase64()", () => {
+	expect(decodeBase64("")).toStrictEqual(new Uint8Array());
+	for (let i = 1; i <= 100; i++) {
+		const bytes = new Uint8Array(i);
+		crypto.getRandomValues(bytes);
+		expect(decodeBase64(encodeBase64(bytes))).toStrictEqual(bytes);
+	}
+});
 
-		test("Accepts encoded data with missing padding", () => {
-			const data = crypto.getRandomValues(new Uint8Array(4));
-			const encoded = base64.encodeNoPadding(data);
-			const result = base64.decodeIgnorePadding(encoded);
-			expect(result).toStrictEqual(data);
-		});
+test("decodeBase64IgnorePadding()", () => {
+	expect(decodeBase64IgnorePadding("")).toStrictEqual(new Uint8Array());
+	for (let i = 1; i <= 100; i++) {
+		const bytes = new Uint8Array(i);
+		crypto.getRandomValues(bytes);
+		expect(decodeBase64IgnorePadding(encodeBase64NoPadding(bytes))).toStrictEqual(bytes);
+	}
+	// includes padding but invalid padding count
+	for (let i = 1; i <= 100; i++) {
+		const bytes = new Uint8Array(i);
+		crypto.getRandomValues(bytes);
+		expect(decodeBase64IgnorePadding(encodeBase64(bytes).replace("=", ""))).toStrictEqual(bytes);
+	}
+});
 
-		test("Throws if padding character is misplaced", () => {
-			const encoded = "Pd2SHA=A";
-			expect(() => base64.decode(encoded)).toThrow();
-		});
-	});
-
-	describe("Base64Encoding.decodeStrictPadding()", () => {
-		test("Returns encoded data", () => {
-			const cases = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
-			for (const length of cases) {
-				const data = crypto.getRandomValues(new Uint8Array(length));
-				const encoded = base64.encode(data);
-				expect(base64.decode(encoded)).toStrictEqual(data);
-			}
-		});
-
-		test("Throws if data is missing padding", () => {
-			const data = crypto.getRandomValues(new Uint8Array(4));
-			const encoded = base64.encodeNoPadding(data);
-			expect(() => base64.decode(encoded)).toThrow();
-		});
-
-		test("Throws if padding character is misplaced", () => {
-			const encoded = "Pd2SHA=A";
-			expect(() => base64.decode(encoded)).toThrow();
-		});
-	});
+test("decodeBase64() throws on invalid padding", () => {
+	expect(() => decodeBase64("qqo")).toThrowError();
+	expect(() => decodeBase64("qqp=")).toThrowError();
+	expect(() => decodeBase64("q===")).toThrowError();
+	expect(() => decodeBase64("====")).toThrowError();
+	expect(() => decodeBase64("=")).toThrowError();
 });

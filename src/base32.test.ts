@@ -1,62 +1,63 @@
-import { describe, expect, test } from "vitest";
+import { expect, test } from "vitest";
 import { base32 as base32Reference } from "@scure/base";
-import { base32 } from "./base32.js";
+import {
+	decodeBase32,
+	decodeBase32IgnorePadding,
+	encodeBase32,
+	encodeBase32NoPadding
+} from "./base32.js";
 
-describe("Base32Encoding", () => {
-	test("Base32Encoding.encode()", () => {
-		const cases = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
-		for (const length of cases) {
-			const data = crypto.getRandomValues(new Uint8Array(length));
-			expect(base32.encode(data)).toBe(base32Reference.encode(data));
-		}
-	});
+test("encodeBase32()", () => {
+	expect(encodeBase32(new Uint8Array())).toBe("");
+	for (let i = 1; i <= 100; i++) {
+		const bytes = new Uint8Array(i);
+		crypto.getRandomValues(bytes);
+		expect(encodeBase32(bytes)).toBe(base32Reference.encode(bytes));
+	}
+});
 
-	test("Base32Encoding.encodeNoPadding()", () => {
-		const cases = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
-		for (const length of cases) {
-			const data = crypto.getRandomValues(new Uint8Array(length));
-			expect(base32.encodeNoPadding(data)).toBe(base32Reference.encode(data).replaceAll("=", ""));
-		}
-	});
+test("encodeBase32NoPadding()", () => {
+	expect(encodeBase32(new Uint8Array())).toBe("");
+	for (let i = 1; i <= 100; i++) {
+		const bytes = new Uint8Array(i);
+		crypto.getRandomValues(bytes);
+		expect(encodeBase32NoPadding(bytes)).toBe(encodeBase32(bytes).replaceAll("=", ""));
+	}
+});
 
-	describe("Base32Encoding.decodeIgnorePadding()", () => {
-		test("Returns encoded data", () => {
-			const cases = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
-			for (const length of cases) {
-				const data = crypto.getRandomValues(new Uint8Array(length));
-				const encoded = base32.encode(data);
-				expect(base32.decodeIgnorePadding(encoded)).toStrictEqual(data);
-			}
-		});
-		test("Accepts encoded data with missing padding", () => {
-			const data = crypto.getRandomValues(new Uint8Array(4));
-			const encoded = base32.encodeNoPadding(data);
-			const result = base32.decodeIgnorePadding(encoded);
-			expect(result).toStrictEqual(data);
-		});
-		test("Throws if padding character is misplaced", () => {
-			const encoded = "J77W5WXN4A==A===";
-			expect(() => base32.decode(encoded)).toThrow();
-		});
-	});
+test("decodeBase32()", () => {
+	expect(decodeBase32("")).toStrictEqual(new Uint8Array());
+	for (let i = 1; i <= 100; i++) {
+		const bytes = new Uint8Array(i);
+		crypto.getRandomValues(bytes);
+		expect(decodeBase32(encodeBase32(bytes))).toStrictEqual(bytes);
+	}
+	for (let i = 1; i <= 100; i++) {
+		const bytes = new Uint8Array(i);
+		crypto.getRandomValues(bytes);
+		expect(decodeBase32(encodeBase32(bytes).toLowerCase())).toStrictEqual(bytes);
+	}
+});
 
-	describe("Base32Encoding.decodeStrictPadding()", () => {
-		test("Returns encoded data", () => {
-			const cases = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
-			for (const length of cases) {
-				const data = crypto.getRandomValues(new Uint8Array(length));
-				const encoded = base32.encode(data);
-				expect(base32.decode(encoded)).toStrictEqual(data);
-			}
-		});
-		test("Throws if data is missing padding", () => {
-			const data = crypto.getRandomValues(new Uint8Array(4));
-			const encoded = base32.encodeNoPadding(data);
-			expect(() => base32.decode(encoded)).toThrow();
-		});
-		test("Throws if padding character is misplaced", () => {
-			const encoded = "J77W5WXN4A==A===";
-			expect(() => base32.decode(encoded)).toThrow();
-		});
-	});
+test("decodeBase32IgnorePadding()", () => {
+	expect(decodeBase32IgnorePadding("")).toStrictEqual(new Uint8Array());
+	for (let i = 1; i <= 100; i++) {
+		const bytes = new Uint8Array(i);
+		crypto.getRandomValues(bytes);
+		expect(decodeBase32IgnorePadding(encodeBase32NoPadding(bytes))).toStrictEqual(bytes);
+	}
+	// includes padding but invalid padding count
+	for (let i = 1; i <= 100; i++) {
+		const bytes = new Uint8Array(i);
+		crypto.getRandomValues(bytes);
+		expect(decodeBase32IgnorePadding(encodeBase32(bytes).replace("=", ""))).toStrictEqual(bytes);
+	}
+});
+
+test("decodeBase32() throws on invalid padding", () => {
+	expect(() => decodeBase32("VKVA")).toThrowError();
+	expect(() => decodeBase32("VKVK====")).toThrowError();
+	expect(() => decodeBase32("V=======")).toThrowError();
+	expect(() => decodeBase32("========")).toThrowError();
+	expect(() => decodeBase32("=")).toThrowError();
 });

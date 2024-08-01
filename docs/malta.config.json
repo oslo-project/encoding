@@ -9,7 +9,8 @@
 			"title": "Examples",
 			"pages": [
 				["Hex encoding", "/examples/hex"],
-				["Base64 and Base32 encoding", "/examples/base64-base32"]
+				["Base64 encoding", "/examples/base64"],
+				["Base32 encoding", "/examples/base32"]
 			]
 		},
 		{

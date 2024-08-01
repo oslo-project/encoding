@@ -1,139 +1,260 @@
-import type { Encoding } from "./index.js";
-
-export class Base64Encoding implements Encoding {
-	public alphabet: string;
-	public padding: string;
-
-	private decodeMap = new Map<string, number>();
-
-	constructor(
-		alphabet: string,
-		options?: {
-			padding?: string;
-		}
-	) {
-		if (alphabet.length !== 64) {
-			throw new Error("Invalid alphabet");
-		}
-		this.alphabet = alphabet;
-		this.padding = options?.padding ?? "=";
-		if (this.alphabet.includes(this.padding) || this.padding.length !== 1) {
-			throw new Error("Invalid padding");
-		}
-		for (let i = 0; i < alphabet.length; i++) {
-			this.decodeMap.set(alphabet[i]!, i);
-		}
-	}
-
-	public encode(data: Uint8Array): string {
-		let result = this.encodeNoPadding(data);
-		const padCount = (4 - (result.length % 4)) % 4;
-		for (let i = 0; i < padCount; i++) {
-			result += "=";
-		}
-		return result;
-	}
-
-	public encodeNoPadding(data: Uint8Array): string {
-		let result = "";
-		let buffer = 0;
-		let shift = 0;
-		for (let i = 0; i < data.length; i++) {
-			buffer = (buffer << 8) | data[i]!;
-			shift += 8;
-			while (shift >= 6) {
-				shift += -6;
-				result += this.alphabet[(buffer >> shift) & 0x3f];
-			}
-		}
-		if (shift > 0) {
-			result += this.alphabet[(buffer << (6 - shift)) & 0x3f];
-		}
-		return result;
-	}
-
-	public decodeIgnorePadding(data: string): Uint8Array {
-		const chunkCount = Math.ceil(data.length / 4);
-		const result: number[] = [];
-		for (let i = 0; i < chunkCount; i++) {
-			let padCount = 0;
-			let buffer = 0;
-			for (let j = 0; j < 4; j++) {
-				if (i * 4 + j >= data.length) {
-					padCount += 1;
-					continue;
-				}
-				const encoded = data[i * 4 + j];
-				if (encoded === "=") {
-					if (i + 1 !== chunkCount) {
-						throw new Error(`Invalid character: ${encoded}`);
-					}
-					padCount += 1;
-					continue;
-				}
-				if (padCount > 0) {
-					throw new Error(`Invalid character: ${encoded}`);
-				}
-				const value = this.decodeMap.get(encoded) ?? null;
-				if (value === null) {
-					throw new Error(`Invalid character: ${encoded}`);
-				}
-				buffer += value << (6 * (3 - j));
-			}
-			result.push((buffer >> 16) & 0xff);
-			if (padCount < 2) {
-				result.push((buffer >> 8) & 0xff);
-			}
-			if (padCount < 1) {
-				result.push(buffer & 0xff);
-			}
-		}
-		return Uint8Array.from(result);
-	}
-
-	public decode(data: string): Uint8Array {
-		const chunkCount = Math.ceil(data.length / 4);
-		const result: number[] = [];
-		for (let i = 0; i < chunkCount; i++) {
-			let padCount = 0;
-			let buffer = 0;
-			for (let j = 0; j < 4; j++) {
-				if (i * 4 + j >= data.length) {
-					throw new Error("Missing padding");
-				}
-				const encoded = data[i * 4 + j];
-				if (encoded === "=") {
-					if (i + 1 !== chunkCount) {
-						throw new Error(`Invalid character: ${encoded}`);
-					}
-					padCount += 1;
-					continue;
-				}
-				if (padCount > 0) {
-					throw new Error(`Invalid character: ${encoded}`);
-				}
-				const value = this.decodeMap.get(encoded) ?? null;
-				if (value === null) {
-					throw new Error(`Invalid character: ${encoded}`);
-				}
-				buffer += value << (6 * (3 - j));
-			}
-			result.push((buffer >> 16) & 0xff);
-			if (padCount < 2) {
-				result.push((buffer >> 8) & 0xff);
-			}
-			if (padCount < 1) {
-				result.push(buffer & 0xff);
-			}
-		}
-		return Uint8Array.from(result);
-	}
+export function encodeBase64(bytes: Uint8Array): string {
+	return encodeBase64_internal(bytes, base64Alphabet, EncodingPadding.Include);
 }
 
-export const base64 = new Base64Encoding(
-	"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
-);
+export function encodeBase64NoPadding(bytes: Uint8Array): string {
+	return encodeBase64_internal(bytes, base64Alphabet, EncodingPadding.None);
+}
 
-export const base64url = new Base64Encoding(
-	"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_"
-);
+export function encodeBase64url(bytes: Uint8Array): string {
+	return encodeBase64_internal(bytes, base64urlAlphabet, EncodingPadding.Include);
+}
+
+export function encodeBase64urlNoPadding(bytes: Uint8Array): string {
+	return encodeBase64_internal(bytes, base64urlAlphabet, EncodingPadding.None);
+}
+
+function encodeBase64_internal(
+	bytes: Uint8Array,
+	alphabet: string,
+	padding: EncodingPadding
+): string {
+	let result = "";
+	for (let i = 0; i < bytes.byteLength; i += 3) {
+		let buffer = 0;
+		let bufferBitSize = 0;
+		for (let j = 0; j < 3 && i + j < bytes.byteLength; j++) {
+			buffer = (buffer << 8) | bytes[i + j];
+			bufferBitSize += 8;
+		}
+		for (let j = 0; j < 4; j++) {
+			if (bufferBitSize >= 6) {
+				result += alphabet[(buffer >> (bufferBitSize - 6)) & 0x3f];
+				bufferBitSize -= 6;
+			} else if (bufferBitSize > 0) {
+				result += alphabet[(buffer << (6 - bufferBitSize)) & 0x3f];
+				bufferBitSize = 0;
+			} else if (padding === EncodingPadding.Include) {
+				result += "=";
+			}
+		}
+	}
+	return result;
+}
+
+const base64Alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+const base64urlAlphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
+
+export function decodeBase64(encoded: string): Uint8Array {
+	return decodeBase64_internal(encoded, base64DecodeMap, DecodingPadding.Required);
+}
+
+export function decodeBase64IgnorePadding(encoded: string): Uint8Array {
+	return decodeBase64_internal(encoded, base64DecodeMap, DecodingPadding.Ignore);
+}
+
+export function decodeBase64url(encoded: string): Uint8Array {
+	return decodeBase64_internal(encoded, base64urlDecodeMap, DecodingPadding.Required);
+}
+
+export function decodeBase64urlIgnorePadding(encoded: string): Uint8Array {
+	return decodeBase64_internal(encoded, base64urlDecodeMap, DecodingPadding.Ignore);
+}
+
+function decodeBase64_internal(
+	encoded: string,
+	decodeMap: Record<string, number>,
+	padding: DecodingPadding
+): Uint8Array {
+	const result = new Uint8Array(Math.ceil(encoded.length / 4) * 3);
+	let totalBytes = 0;
+	for (let i = 0; i < encoded.length; i += 4) {
+		if (totalBytes % 3 !== 0) {
+			throw new Error("Invalid padding");
+		}
+		let chunk = 0;
+		let bitsRead = 0;
+		for (let j = 0; j < 4; j++) {
+			if (padding === DecodingPadding.Required && encoded[i + j] === "=") {
+				continue;
+			}
+			if (
+				padding === DecodingPadding.Ignore &&
+				(i + j >= encoded.length || encoded[i + j] === "=")
+			) {
+				continue;
+			}
+			if (j > 0 && encoded[i + j - 1] === "=") {
+				throw new Error("Invalid padding");
+			}
+			if (!(encoded[i + j] in decodeMap)) {
+				throw new Error("Invalid character");
+			}
+			chunk |= decodeMap[encoded[i + j]] << ((3 - j) * 6);
+			bitsRead += 6;
+		}
+		if (bitsRead < 24) {
+			let unused: number;
+			if (bitsRead === 12) {
+				unused = chunk & 0xffff;
+			} else if (bitsRead === 18) {
+				unused = chunk & 0xff;
+			} else {
+				throw new Error("Invalid padding");
+			}
+			if (unused !== 0) {
+				throw new Error("Invalid padding");
+			}
+		}
+		const byteLength = Math.floor(bitsRead / 8);
+		for (let i = 0; i < byteLength; i++) {
+			result[totalBytes] = (chunk >> (16 - i * 8)) & 0xff;
+			totalBytes++;
+		}
+	}
+	return result.slice(0, totalBytes);
+}
+
+enum EncodingPadding {
+	Include = 0,
+	None
+}
+
+enum DecodingPadding {
+	Required = 0,
+	Ignore
+}
+
+const base64DecodeMap = {
+	"0": 52,
+	"1": 53,
+	"2": 54,
+	"3": 55,
+	"4": 56,
+	"5": 57,
+	"6": 58,
+	"7": 59,
+	"8": 60,
+	"9": 61,
+	A: 0,
+	B: 1,
+	C: 2,
+	D: 3,
+	E: 4,
+	F: 5,
+	G: 6,
+	H: 7,
+	I: 8,
+	J: 9,
+	K: 10,
+	L: 11,
+	M: 12,
+	N: 13,
+	O: 14,
+	P: 15,
+	Q: 16,
+	R: 17,
+	S: 18,
+	T: 19,
+	U: 20,
+	V: 21,
+	W: 22,
+	X: 23,
+	Y: 24,
+	Z: 25,
+	a: 26,
+	b: 27,
+	c: 28,
+	d: 29,
+	e: 30,
+	f: 31,
+	g: 32,
+	h: 33,
+	i: 34,
+	j: 35,
+	k: 36,
+	l: 37,
+	m: 38,
+	n: 39,
+	o: 40,
+	p: 41,
+	q: 42,
+	r: 43,
+	s: 44,
+	t: 45,
+	u: 46,
+	v: 47,
+	w: 48,
+	x: 49,
+	y: 50,
+	z: 51,
+	"+": 62,
+	"/": 63
+};
+
+const base64urlDecodeMap = {
+	"0": 52,
+	"1": 53,
+	"2": 54,
+	"3": 55,
+	"4": 56,
+	"5": 57,
+	"6": 58,
+	"7": 59,
+	"8": 60,
+	"9": 61,
+	A: 0,
+	B: 1,
+	C: 2,
+	D: 3,
+	E: 4,
+	F: 5,
+	G: 6,
+	H: 7,
+	I: 8,
+	J: 9,
+	K: 10,
+	L: 11,
+	M: 12,
+	N: 13,
+	O: 14,
+	P: 15,
+	Q: 16,
+	R: 17,
+	S: 18,
+	T: 19,
+	U: 20,
+	V: 21,
+	W: 22,
+	X: 23,
+	Y: 24,
+	Z: 25,
+	a: 26,
+	b: 27,
+	c: 28,
+	d: 29,
+	e: 30,
+	f: 31,
+	g: 32,
+	h: 33,
+	i: 34,
+	j: 35,
+	k: 36,
+	l: 37,
+	m: 38,
+	n: 39,
+	o: 40,
+	p: 41,
+	q: 42,
+	r: 43,
+	s: 44,
+	t: 45,
+	u: 46,
+	v: 47,
+	w: 48,
+	x: 49,
+	y: 50,
+	z: 51,
+	"-": 62,
+	_: 63
+};

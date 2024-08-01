@@ -1,7 +1,7 @@
 {
 	"name": "@oslojs/encoding",
 	"type": "module",
-	"version": "0.3.0",
+	"version": "0.4.0",
 	"description": "Runtime-agnostic library for encoding and decoding data",
 	"scripts": {
 		"build": "rm -rf dist/* && tsc --project tsconfig.build.json",

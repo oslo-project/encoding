@@ -1,164 +1,179 @@
-import type { Encoding } from "./index.js";
-
-export class Base32Encoding implements Encoding {
-	public alphabet: string;
-	public padding: string;
-
-	private decodeMap = new Map<string, number>();
-
-	constructor(
-		alphabet: string,
-		options?: {
-			padding?: string;
-		}
-	) {
-		if (alphabet.length !== 32) {
-			throw new Error("Invalid alphabet");
-		}
-		this.alphabet = alphabet;
-		this.padding = options?.padding ?? "=";
-		if (this.alphabet.includes(this.padding) || this.padding.length !== 1) {
-			throw new Error("Invalid padding");
-		}
-		for (let i = 0; i < alphabet.length; i++) {
-			this.decodeMap.set(alphabet[i]!, i);
-		}
-	}
-
-	public encode(data: Uint8Array): string {
-		let result = this.encodeNoPadding(data);
-		const padCount = (8 - (result.length % 8)) % 8;
-		for (let i = 0; i < padCount; i++) {
-			result += "=";
-		}
-		return result;
-	}
-
-	public encodeNoPadding(data: Uint8Array): string {
-		let result = "";
-		let buffer = 0;
-		let shift = 0;
-		for (let i = 0; i < data.length; i++) {
-			buffer = (buffer << 8) | data[i]!;
-			shift += 8;
-			while (shift >= 5) {
-				shift -= 5;
-				result += this.alphabet[(buffer >> shift) & 0x1f];
-			}
-		}
-		if (shift > 0) {
-			result += this.alphabet[(buffer << (5 - shift)) & 0x1f];
-		}
-		return result;
-	}
-
-	public decodeIgnorePadding(data: string): Uint8Array {
-		const chunkCount = Math.ceil(data.length / 8);
-		const result: number[] = [];
-		for (let i = 0; i < chunkCount; i++) {
-			let padCount = 0;
-			const chunks: number[] = [];
-			for (let j = 0; j < 8; j++) {
-				if (i * 8 + j >= data.length) {
-					padCount += 1;
-					continue;
-				}
-				const encoded = data[i * 8 + j];
-				if (encoded === "=") {
-					if (i + 1 !== chunkCount) {
-						throw new Error(`Invalid character: ${encoded}`);
-					}
-					padCount += 1;
-					continue;
-				}
-				if (padCount > 0) {
-					throw new Error(`Invalid character: ${encoded}`);
-				}
-				const value = this.decodeMap.get(encoded) ?? null;
-				if (value === null) {
-					throw new Error(`Invalid character: ${encoded}`);
-				}
-				chunks.push(value);
-			}
-			if (padCount === 8 || padCount === 7 || padCount === 5 || padCount === 2) {
-				throw new Error("Invalid padding");
-			}
-			const byte1 = (chunks[0]! << 3) + (chunks[1]! >> 2);
-			result.push(byte1);
-			if (padCount < 6) {
-				const byte2 = ((chunks[1]! & 0x03) << 6) + (chunks[2]! << 1) + (chunks[3]! >> 4);
-				result.push(byte2);
-			}
-			if (padCount < 4) {
-				const byte3 = ((chunks[3]! & 0xff) << 4) + (chunks[4]! >> 1);
-				result.push(byte3);
-			}
-			if (padCount < 3) {
-				const byte4 = ((chunks[4]! & 0x01) << 7) + (chunks[5]! << 2) + (chunks[6]! >> 3);
-				result.push(byte4);
-			}
-			if (padCount < 1) {
-				const byte5 = ((chunks[6]! & 0x07) << 5) + chunks[7]!;
-				result.push(byte5);
-			}
-		}
-		return Uint8Array.from(result);
-	}
-
-	public decode(data: string): Uint8Array {
-		const chunkCount = Math.ceil(data.length / 8);
-		const result: number[] = [];
-		for (let i = 0; i < chunkCount; i++) {
-			let padCount = 0;
-			const chunks: number[] = [];
-			for (let j = 0; j < 8; j++) {
-				if (i * 8 + j >= data.length) {
-					throw new Error("Missing padding");
-				}
-				const encoded = data[i * 8 + j];
-				if (encoded === "=") {
-					if (i + 1 !== chunkCount) {
-						throw new Error(`Invalid character: ${encoded}`);
-					}
-					padCount += 1;
-					continue;
-				}
-				if (padCount > 0) {
-					throw new Error(`Invalid character: ${encoded}`);
-				}
-				const value = this.decodeMap.get(encoded) ?? null;
-				if (value === null) {
-					throw new Error(`Invalid character: ${encoded}`);
-				}
-				chunks.push(value);
-			}
-			if (padCount === 8 || padCount === 7 || padCount === 5 || padCount === 2) {
-				throw new Error("Invalid padding");
-			}
-			const byte1 = (chunks[0]! << 3) + (chunks[1]! >> 2);
-			result.push(byte1);
-			if (padCount < 6) {
-				const byte2 = ((chunks[1]! & 0x03) << 6) + (chunks[2]! << 1) + (chunks[3]! >> 4);
-				result.push(byte2);
-			}
-			if (padCount < 4) {
-				const byte3 = ((chunks[3]! & 0xff) << 4) + (chunks[4]! >> 1);
-				result.push(byte3);
-			}
-			if (padCount < 3) {
-				const byte4 = ((chunks[4]! & 0x01) << 7) + (chunks[5]! << 2) + (chunks[6]! >> 3);
-				result.push(byte4);
-			}
-			if (padCount < 1) {
-				const byte5 = ((chunks[6]! & 0x07) << 5) + chunks[7]!;
-				result.push(byte5);
-			}
-		}
-		return Uint8Array.from(result);
-	}
+export function encodeBase32(bytes: Uint8Array): string {
+	return encodeBase32_internal(bytes, base32Alphabet, EncodingPadding.Include);
 }
 
-export const base32 = new Base32Encoding("ABCDEFGHIJKLMNOPQRSTUVWXYZ234567");
-export const base32LowerCase = new Base32Encoding("abcdefghijklmnopqrstuvwxyz234567");
-export const base32hex = new Base32Encoding("0123456789ABCDEFGHIJKLMNOPQRSTUV");
-export const base32hexLowerCase = new Base32Encoding("0123456789abcdefghijklmnopqrstuv");
+export function encodeBase32NoPadding(bytes: Uint8Array): string {
+	return encodeBase32_internal(bytes, base32Alphabet, EncodingPadding.None);
+}
+
+function encodeBase32_internal(
+	bytes: Uint8Array,
+	alphabet: string,
+	padding: EncodingPadding
+): string {
+	let result = "";
+	for (let i = 0; i < bytes.byteLength; i += 5) {
+		let buffer = 0n;
+		let bufferBitSize = 0;
+		for (let j = 0; j < 5 && i + j < bytes.byteLength; j++) {
+			buffer = (buffer << 8n) | BigInt(bytes[i + j]);
+			bufferBitSize += 8;
+		}
+		if (bufferBitSize % 5 !== 0) {
+			buffer = buffer << BigInt(5 - (bufferBitSize % 5));
+			bufferBitSize += 5 - (bufferBitSize % 5);
+		}
+		for (let j = 0; j < 8; j++) {
+			if (bufferBitSize >= 5) {
+				result += alphabet[Number((buffer >> BigInt(bufferBitSize - 5)) & 0x1fn)];
+				bufferBitSize -= 5;
+			} else if (bufferBitSize > 0) {
+				result += alphabet[Number((buffer << BigInt(6 - bufferBitSize)) & 0x3fn)];
+				bufferBitSize = 0;
+			} else if (padding === EncodingPadding.Include) {
+				result += "=";
+			}
+		}
+	}
+	return result;
+}
+
+export function decodeBase32(encoded: string): Uint8Array {
+	return decodeBase32_internal(encoded, base32DecodeMap, DecodingPadding.Required);
+}
+
+export function decodeBase32IgnorePadding(encoded: string): Uint8Array {
+	return decodeBase32_internal(encoded, base32DecodeMap, DecodingPadding.Ignore);
+}
+
+function decodeBase32_internal(
+	encoded: string,
+	decodeMap: Record<string, number>,
+	padding: DecodingPadding
+): Uint8Array {
+	const result = new Uint8Array(Math.ceil(encoded.length / 8) * 5);
+	let totalBytes = 0;
+	for (let i = 0; i < encoded.length; i += 8) {
+		let chunk = 0n;
+		let bitsRead = 0;
+		for (let j = 0; j < 8; j++) {
+			if (padding === DecodingPadding.Required) {
+				if (encoded[i + j] === "=") {
+					continue;
+				}
+				if (i + j >= encoded.length) {
+					throw new Error("Invalid padding");
+				}
+			}
+			if (padding === DecodingPadding.Ignore) {
+				if (i + j >= encoded.length || encoded[i + j] === "=") {
+					continue;
+				}
+			}
+			if (j > 0 && encoded[i + j - 1] === "=") {
+				throw new Error("Invalid padding");
+			}
+			if (!(encoded[i + j] in decodeMap)) {
+				throw new Error("Invalid character");
+			}
+			chunk |= BigInt(decodeMap[encoded[i + j]]) << BigInt((7 - j) * 5);
+			bitsRead += 5;
+		}
+		if (bitsRead < 40) {
+			let unused: bigint;
+			if (bitsRead === 10) {
+				unused = chunk & 0xffffffffn;
+			} else if (bitsRead === 20) {
+				unused = chunk & 0xffffffn;
+			} else if (bitsRead === 25) {
+				unused = chunk & 0xffffn;
+			} else if (bitsRead === 35) {
+				unused = chunk & 0xffn;
+			} else {
+				throw new Error("Invalid padding");
+			}
+			if (unused !== 0n) {
+				throw new Error("Invalid padding");
+			}
+		}
+		const byteLength = Math.floor(bitsRead / 8);
+		for (let i = 0; i < byteLength; i++) {
+			result[totalBytes] = Number((chunk >> BigInt(32 - i * 8)) & 0xffn);
+			totalBytes++;
+		}
+	}
+	return result.slice(0, totalBytes);
+}
+
+const base32Alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
+
+const base32DecodeMap = {
+	A: 0,
+	B: 1,
+	C: 2,
+	D: 3,
+	E: 4,
+	F: 5,
+	G: 6,
+	H: 7,
+	I: 8,
+	J: 9,
+	K: 10,
+	L: 11,
+	M: 12,
+	N: 13,
+	O: 14,
+	P: 15,
+	Q: 16,
+	R: 17,
+	S: 18,
+	T: 19,
+	U: 20,
+	V: 21,
+	W: 22,
+	X: 23,
+	Y: 24,
+	Z: 25,
+	a: 0,
+	b: 1,
+	c: 2,
+	d: 3,
+	e: 4,
+	f: 5,
+	g: 6,
+	h: 7,
+	i: 8,
+	j: 9,
+	k: 10,
+	l: 11,
+	m: 12,
+	n: 13,
+	o: 14,
+	p: 15,
+	q: 16,
+	r: 17,
+	s: 18,
+	t: 19,
+	u: 20,
+	v: 21,
+	w: 22,
+	x: 23,
+	y: 24,
+	z: 25,
+	"2": 26,
+	"3": 27,
+	"4": 28,
+	"5": 29,
+	"6": 30,
+	"7": 31
+};
+
+enum EncodingPadding {
+	Include = 0,
+	None
+}
+
+enum DecodingPadding {
+	Required = 0,
+	Ignore
+}

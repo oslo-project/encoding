@@ -4,12 +4,13 @@ title: "Hex encoding"
 
 # Hex encoding
 
-Use [`encodeHex()`](/reference/main/encodeHex) and [`decodeHex()`](/reference/main/decodeHex) to encode and decode data with hex.
+Use `encodeHexUpperCase()` or `encodeHexLowerCase()` to encode data and `decodeHex()` to decode hex-encoded strings. `decodeHex()` is case-insensitive.
 
 ```ts
-import { encodeHex, decodeHex } from "@oslojs/encoding";
+import { encodeUpperCase, encodeHexLowerCase, decodeHex } from "@oslojs/encoding";
 
 const data: Uint8Array = new TextEncoder().encode("hello world");
-const hex = encodeHex(data);
+const hex = encodeHexUpperCase(data);
+const hex = encodeHexLowerCase(data);
 const decoded = decodeHex(hex);
 ```

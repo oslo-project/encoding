@@ -1,16 +1,17 @@
-export { encodeHex, decodeHex } from "./hex.js";
+export { encodeHexLowerCase, encodeHexUpperCase, decodeHex } from "./hex.js";
 export {
-	Base32Encoding,
-	base32,
-	base32hex,
-	base32LowerCase,
-	base32hexLowerCase
+	encodeBase32,
+	encodeBase32NoPadding,
+	decodeBase32,
+	decodeBase32IgnorePadding
 } from "./base32.js";
-export { Base64Encoding, base64, base64url } from "./base64.js";
-
-export interface Encoding {
-	encode: (data: Uint8Array) => string;
-	encodeNoPadding: (data: Uint8Array) => string;
-	decode: (data: string) => Uint8Array;
-	decodeIgnorePadding: (data: string) => Uint8Array;
-}
+export {
+	encodeBase64,
+	encodeBase64NoPadding,
+	encodeBase64url,
+	encodeBase64urlNoPadding,
+	decodeBase64,
+	decodeBase64IgnorePadding,
+	decodeBase64url,
+	decodeBase64urlIgnorePadding
+} from "./base64.js";
