@@ -1,5 +1,9 @@
 # @oslojs/encoding
 
+## 1.0.0
+
+- No changes.
+
 ## 0.4.1
 
 - Remove redundant code.
