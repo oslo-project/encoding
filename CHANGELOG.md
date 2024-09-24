@@ -1,6 +1,6 @@
 # @oslojs/encoding
 
-## 1.0.0
+## 1.1.0
 
 - Add `encodeBase32UpperCase()`, `encodeBase32UpperCaseNoPadding()`, `encodeBase32LowerCase()`, and `encodeBase32LowerCaseNoPadding()`.
 
