@@ -4,7 +4,11 @@ import {
 	decodeBase32,
 	decodeBase32IgnorePadding,
 	encodeBase32,
-	encodeBase32NoPadding
+	encodeBase32LowerCase,
+	encodeBase32LowerCaseNoPadding,
+	encodeBase32NoPadding,
+	encodeBase32UpperCase,
+	encodeBase32UpperCaseNoPadding
 } from "./base32.js";
 
 test("encodeBase32()", () => {
@@ -21,7 +25,47 @@ test("encodeBase32NoPadding()", () => {
 	for (let i = 1; i <= 100; i++) {
 		const bytes = new Uint8Array(i);
 		crypto.getRandomValues(bytes);
-		expect(encodeBase32NoPadding(bytes)).toBe(encodeBase32(bytes).replaceAll("=", ""));
+		expect(encodeBase32NoPadding(bytes)).toBe(base32Reference.encode(bytes).replaceAll("=", ""));
+	}
+});
+
+test("encodeBase32UpperCase()", () => {
+	expect(encodeBase32(new Uint8Array())).toBe("");
+	for (let i = 1; i <= 100; i++) {
+		const bytes = new Uint8Array(i);
+		crypto.getRandomValues(bytes);
+		expect(encodeBase32UpperCase(bytes)).toBe(base32Reference.encode(bytes));
+	}
+});
+
+test("encodeBase32UpperCaseNoPadding()", () => {
+	expect(encodeBase32(new Uint8Array())).toBe("");
+	for (let i = 1; i <= 100; i++) {
+		const bytes = new Uint8Array(i);
+		crypto.getRandomValues(bytes);
+		expect(encodeBase32UpperCaseNoPadding(bytes)).toBe(
+			base32Reference.encode(bytes).replaceAll("=", "")
+		);
+	}
+});
+
+test("encodeBase32LowerCase()", () => {
+	expect(encodeBase32(new Uint8Array())).toBe("");
+	for (let i = 1; i <= 100; i++) {
+		const bytes = new Uint8Array(i);
+		crypto.getRandomValues(bytes);
+		expect(encodeBase32LowerCase(bytes)).toBe(base32Reference.encode(bytes).toLowerCase());
+	}
+});
+
+test("encodeBase32LowerCaseNoPadding()", () => {
+	expect(encodeBase32(new Uint8Array())).toBe("");
+	for (let i = 1; i <= 100; i++) {
+		const bytes = new Uint8Array(i);
+		crypto.getRandomValues(bytes);
+		expect(encodeBase32LowerCaseNoPadding(bytes)).toBe(
+			base32Reference.encode(bytes).toLowerCase().replaceAll("=", "")
+		);
 	}
 });
 

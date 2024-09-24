@@ -1,9 +1,27 @@
-export function encodeBase32(bytes: Uint8Array): string {
-	return encodeBase32_internal(bytes, base32Alphabet, EncodingPadding.Include);
+export function encodeBase32UpperCase(bytes: Uint8Array): string {
+	return encodeBase32_internal(bytes, base32UpperCaseAlphabet, EncodingPadding.Include);
 }
 
+export function encodeBase32UpperCaseNoPadding(bytes: Uint8Array): string {
+	return encodeBase32_internal(bytes, base32UpperCaseAlphabet, EncodingPadding.None);
+}
+
+export function encodeBase32LowerCase(bytes: Uint8Array): string {
+	return encodeBase32_internal(bytes, base32LowerCaseAlphabet, EncodingPadding.Include);
+}
+
+export function encodeBase32LowerCaseNoPadding(bytes: Uint8Array): string {
+	return encodeBase32_internal(bytes, base32LowerCaseAlphabet, EncodingPadding.None);
+}
+
+/** Replaced: Use encodeBase32UpperCase() instead. */
+export function encodeBase32(bytes: Uint8Array): string {
+	return encodeBase32UpperCase(bytes);
+}
+
+/** Replaced: Use encodeBase32UpperCaseNoPadding() instead. */
 export function encodeBase32NoPadding(bytes: Uint8Array): string {
-	return encodeBase32_internal(bytes, base32Alphabet, EncodingPadding.None);
+	return encodeBase32UpperCaseNoPadding(bytes);
 }
 
 function encodeBase32_internal(
@@ -105,7 +123,8 @@ function decodeBase32_internal(
 	return result.slice(0, totalBytes);
 }
 
-const base32Alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
+const base32UpperCaseAlphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
+const base32LowerCaseAlphabet = "abcdefghijklmnopqrstuvwxyz234567";
 
 const base32DecodeMap = {
 	A: 0,

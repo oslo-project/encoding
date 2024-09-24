@@ -2,6 +2,10 @@
 
 ## 1.0.0
 
+- Added `encodeBase32UpperCase()`, `encodeBase32UpperCaseNoPadding()`, `encodeBase32LowerCase()`, and `encodeBase32LowerCaseNoPadding()`.
+
+## 1.0.0
+
 - No changes.
 
 ## 0.4.1
