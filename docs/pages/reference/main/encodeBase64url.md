@@ -9,7 +9,7 @@ Encodes a byte array into [canonical](https://datatracker.ietf.org/doc/html/rfc4
 ## Definition
 
 ```ts
-function encodeBase64(bytes: Uint8Array): string;
+function encodeBase64url(bytes: Uint8Array): string;
 ```
 
 ### Parameters
