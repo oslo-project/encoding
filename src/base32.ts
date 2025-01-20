@@ -30,26 +30,29 @@ function encodeBase32_internal(
 	padding: EncodingPadding
 ): string {
 	let result = "";
+	let buffer = 0;
+	let bufferSize = 0;
 	for (let i = 0; i < bytes.byteLength; i += 5) {
-		let buffer = 0n;
-		let bufferBitSize = 0;
-		for (let j = 0; j < 5 && i + j < bytes.byteLength; j++) {
-			buffer = (buffer << 8n) | BigInt(bytes[i + j]);
-			bufferBitSize += 8;
+		let writtenCharsInChunk = 0;
+		for (let j = 0; j < 5; j++) {
+			if (i + j >= bytes.byteLength) {
+				result += alphabet[buffer << (5 - bufferSize)]; // Append bits
+				writtenCharsInChunk++;
+				break;
+			}
+			buffer = (buffer << 8) | bytes[i + j];
+			bufferSize += 8;
+			while (bufferSize >= 5) {
+				result += alphabet[buffer >> (bufferSize - 5)];
+				buffer &= (1 << (bufferSize - 5)) - 1; // Remove leading 5 bits
+				bufferSize -= 5;
+				writtenCharsInChunk++;
+			}
 		}
-		if (bufferBitSize % 5 !== 0) {
-			buffer = buffer << BigInt(5 - (bufferBitSize % 5));
-			bufferBitSize += 5 - (bufferBitSize % 5);
-		}
-		for (let j = 0; j < 8; j++) {
-			if (bufferBitSize >= 5) {
-				result += alphabet[Number((buffer >> BigInt(bufferBitSize - 5)) & 0x1fn)];
-				bufferBitSize -= 5;
-			} else if (bufferBitSize > 0) {
-				result += alphabet[Number((buffer << BigInt(6 - bufferBitSize)) & 0x3fn)];
-				bufferBitSize = 0;
-			} else if (padding === EncodingPadding.Include) {
+		if (padding === EncodingPadding.Include) {
+			while (writtenCharsInChunk < 8) {
 				result += "=";
+				writtenCharsInChunk++;
 			}
 		}
 	}
@@ -70,57 +73,45 @@ function decodeBase32_internal(
 	padding: DecodingPadding
 ): Uint8Array {
 	const result = new Uint8Array(Math.ceil(encoded.length / 8) * 5);
-	let totalBytes = 0;
+	let size = 0;
+	let buffer = 0;
+	let bufferSize = 0;
+	let padded = false;
 	for (let i = 0; i < encoded.length; i += 8) {
-		let chunk = 0n;
-		let bitsRead = 0;
+		if (padded) {
+			throw new Error("Invalid padding");
+		}
 		for (let j = 0; j < 8; j++) {
-			if (padding === DecodingPadding.Required) {
-				if (encoded[i + j] === "=") {
-					continue;
-				}
-				if (i + j >= encoded.length) {
+			if (i + j >= encoded.length) {
+				if (padding === DecodingPadding.Required) {
 					throw new Error("Invalid padding");
 				}
+				break;
 			}
-			if (padding === DecodingPadding.Ignore) {
-				if (i + j >= encoded.length || encoded[i + j] === "=") {
-					continue;
+			if (encoded[i + j] === "=") {
+				if (bufferSize === 0 || buffer !== 0) {
+					throw new Error("Invalid padding");
 				}
+				padded = true;
+				continue;
 			}
-			if (j > 0 && encoded[i + j - 1] === "=") {
+			if (padded) {
 				throw new Error("Invalid padding");
 			}
 			if (!(encoded[i + j] in decodeMap)) {
 				throw new Error("Invalid character");
 			}
-			chunk |= BigInt(decodeMap[encoded[i + j]]) << BigInt((7 - j) * 5);
-			bitsRead += 5;
-		}
-		if (bitsRead < 40) {
-			let unused: bigint;
-			if (bitsRead === 10) {
-				unused = chunk & 0xffffffffn;
-			} else if (bitsRead === 20) {
-				unused = chunk & 0xffffffn;
-			} else if (bitsRead === 25) {
-				unused = chunk & 0xffffn;
-			} else if (bitsRead === 35) {
-				unused = chunk & 0xffn;
-			} else {
-				throw new Error("Invalid padding");
+			buffer = (buffer << 5) | decodeMap[encoded[i + j]]; // Append 5 bits
+			bufferSize += 5;
+			while (bufferSize >= 8) {
+				result[size] = buffer >> (bufferSize - 8);
+				size++;
+				buffer &= (1 << (bufferSize - 8)) - 1; // Remove leading 8 bits
+				bufferSize -= 8;
 			}
-			if (unused !== 0n) {
-				throw new Error("Invalid padding");
-			}
-		}
-		const byteLength = Math.floor(bitsRead / 8);
-		for (let i = 0; i < byteLength; i++) {
-			result[totalBytes] = Number((chunk >> BigInt(32 - i * 8)) & 0xffn);
-			totalBytes++;
 		}
 	}
-	return result.slice(0, totalBytes);
+	return result.slice(0, size);
 }
 
 const base32UpperCaseAlphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";

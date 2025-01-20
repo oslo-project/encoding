@@ -22,18 +22,18 @@ function encodeBase64_internal(
 	let result = "";
 	for (let i = 0; i < bytes.byteLength; i += 3) {
 		let buffer = 0;
-		let bufferBitSize = 0;
+		let bufferSize = 0;
 		for (let j = 0; j < 3 && i + j < bytes.byteLength; j++) {
 			buffer = (buffer << 8) | bytes[i + j];
-			bufferBitSize += 8;
+			bufferSize += 8;
 		}
 		for (let j = 0; j < 4; j++) {
-			if (bufferBitSize >= 6) {
-				result += alphabet[(buffer >> (bufferBitSize - 6)) & 0x3f];
-				bufferBitSize -= 6;
-			} else if (bufferBitSize > 0) {
-				result += alphabet[(buffer << (6 - bufferBitSize)) & 0x3f];
-				bufferBitSize = 0;
+			if (bufferSize >= 6) {
+				result += alphabet[(buffer >> (bufferSize - 6)) & 0x3f];
+				bufferSize -= 6;
+			} else if (bufferSize > 0) {
+				result += alphabet[(buffer << (6 - bufferSize)) & 0x3f];
+				bufferSize = 0;
 			} else if (padding === EncodingPadding.Include) {
 				result += "=";
 			}
@@ -67,49 +67,45 @@ function decodeBase64_internal(
 	padding: DecodingPadding
 ): Uint8Array {
 	const result = new Uint8Array(Math.ceil(encoded.length / 4) * 3);
-	let totalBytes = 0;
+	let size = 0;
+	let buffer = 0;
+	let bufferSize = 0;
+	let padded = false;
 	for (let i = 0; i < encoded.length; i += 4) {
-		let chunk = 0;
-		let bitsRead = 0;
+		if (padded) {
+			throw new Error("Invalid padding");
+		}
 		for (let j = 0; j < 4; j++) {
-			if (padding === DecodingPadding.Required && encoded[i + j] === "=") {
+			if (i + j >= encoded.length) {
+				if (padding === DecodingPadding.Required) {
+					throw new Error("Invalid padding");
+				}
+				break;
+			}
+			if (encoded[i + j] === "=") {
+				if (bufferSize === 0 || buffer !== 0) {
+					throw new Error("Invalid padding");
+				}
+				padded = true;
 				continue;
 			}
-			if (
-				padding === DecodingPadding.Ignore &&
-				(i + j >= encoded.length || encoded[i + j] === "=")
-			) {
-				continue;
-			}
-			if (j > 0 && encoded[i + j - 1] === "=") {
+			if (padded) {
 				throw new Error("Invalid padding");
 			}
 			if (!(encoded[i + j] in decodeMap)) {
 				throw new Error("Invalid character");
 			}
-			chunk |= decodeMap[encoded[i + j]] << ((3 - j) * 6);
-			bitsRead += 6;
-		}
-		if (bitsRead < 24) {
-			let unused: number;
-			if (bitsRead === 12) {
-				unused = chunk & 0xffff;
-			} else if (bitsRead === 18) {
-				unused = chunk & 0xff;
-			} else {
-				throw new Error("Invalid padding");
+			buffer = (buffer << 6) | decodeMap[encoded[i + j]]; // Append 6 bits
+			bufferSize += 6;
+			while (bufferSize >= 8) {
+				result[size] = buffer >> (bufferSize - 8);
+				size++;
+				buffer &= (1 << (bufferSize - 8)) - 1; // Remove leading 8 bits
+				bufferSize -= 8;
 			}
-			if (unused !== 0) {
-				throw new Error("Invalid padding");
-			}
-		}
-		const byteLength = Math.floor(bitsRead / 8);
-		for (let i = 0; i < byteLength; i++) {
-			result[totalBytes] = (chunk >> (16 - i * 8)) & 0xff;
-			totalBytes++;
 		}
 	}
-	return result.slice(0, totalBytes);
+	return result.slice(0, size);
 }
 
 enum EncodingPadding {
