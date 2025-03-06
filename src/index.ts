@@ -19,3 +19,4 @@ export {
 	decodeBase64url,
 	decodeBase64urlIgnorePadding
 } from "./base64.js";
+export { encodeUTF8, decodeUTF8, isValidUTF8Encoding } from "./utf-8.js";
