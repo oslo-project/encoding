@@ -19,3 +19,4 @@ export {
 	decodeBase64url,
 	decodeBase64urlIgnorePadding
 } from "./base64.js";
+export { encodeASCII, decodeASCII, isValidASCIIEncoding } from "./ascii.js";
