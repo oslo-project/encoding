@@ -1,3 +1,4 @@
+/** ASCII encodes a string into a byte sequence. Throws a `TypeError` on invalid characters. */
 export function encodeASCII(s: string): Uint8Array {
 	const bytes = new Uint8Array(s.length);
 	for (let i = 0; i < s.length; i++) {
@@ -13,6 +14,7 @@ export function encodeASCII(s: string): Uint8Array {
 	return bytes;
 }
 
+/** ASCII decodes a byte sequence into a string. Throws a `TypeError` if the encoding is invalid. */
 export function decodeASCII(bytes: Uint8Array): string {
 	let s = "";
 	for (let i = 0; i < bytes.length; i++) {
