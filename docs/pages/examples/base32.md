@@ -7,9 +7,32 @@ title: "Base32 encoding"
 Use `encodeBase32UpperCase()` or `encodeBase32LowerCase()` to encode data with base32. Use `encodeBase32UpperCaseNoPadding()` or `encodeBase32LowerCaseNoPadding()` to omit padding. `decodeBase32()` requires padding while `decodeBase32IgnorePadding()` ignores padding entirely. Both decoding methods are case insensitive.
 
 ```ts
-import { encodeBase32UpperCase, decodeBase32 } from "@oslojs/encoding";
+import { encodeBase32UpperCase, encodeBase32LowerCase, decodeBase32 } from "@oslojs/encoding";
 
-const data: Uint8Array = new TextEncoder().encode("hello world");
+const data = new Uint8Array();
 const encoded = encodeBase32UpperCase(data);
+const encoded = encodeBase32LowerCase(data);
 const decoded = decodeBase32(encoded);
+```
+
+```ts
+import {
+	encodeBase32UpperCaseNoPadding,
+	encodeBase32LowerCaseNoPadding,
+	decodeBase32IgnorePadding
+} from "@oslojs/encoding";
+
+const data = new Uint8Array();
+const encoded = encodeBase32UpperCaseNoPadding(data);
+const encoded = encodeBase32LowerCaseNoPadding(data);
+const decoded = decodeBase32IgnorePadding(encoded);
+```
+
+To encode strings, use [`encodeUTF8()`](/examples/utf-8) to UTF-8 encode it first.
+
+```ts
+import { encodeUTF8, encodeBase32UpperCase } from "@oslojs/encoding";
+
+const data = encodeUTF8("Hello world!");
+const encoded = encodeBase32UpperCase(data);
 ```

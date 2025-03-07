@@ -10,7 +10,8 @@
 			"pages": [
 				["Hex encoding", "/examples/hex"],
 				["Base64 encoding", "/examples/base64"],
-				["Base32 encoding", "/examples/base32"]
+				["Base32 encoding", "/examples/base32"],
+				["UTF-8 encoding", "/examples/utf-8"]
 			]
 		},
 		{

@@ -4,6 +4,9 @@ import { DynamicBuffer } from "@oslojs/binary";
  *
  * - Code points greater than 0x10ffff.
  * - High and low surrogates used by UTF-16.
+ *
+ * Since this method throws when the string contains high and low surrogates,
+ * it behaves slightly different from the `TextEncoder.encode()` method in the standard web API.
  */
 export function encodeUTF8(s: string): Uint8Array {
 	const buffer = new DynamicBuffer(s.length);
@@ -62,7 +65,7 @@ export function decodeUTF8(bytes: Uint8Array): string {
 	return s;
 }
 
-/** UTF-8 decodes a byte sequence into an array of code points (uint16). Throws a `TypeError` on invalid encodings:
+/** UTF-8 decodes a byte sequence into an array of code points (uint32). Throws a `TypeError` on invalid encodings:
  *
  * - Overlong encodings.
  * - Code points greater than x10ffff.
