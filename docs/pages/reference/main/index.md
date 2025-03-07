@@ -6,6 +6,7 @@ title: "@oslojs/encoding"
 
 # Functions
 
+- [`decodeASCII()`](/reference/main/decodeASCII)
 - [`decodeBase32()`](/reference/main/decodeBase32)
 - [`decodeBase32IgnorePadding()`](/reference/main/decodeBase32IgnorePadding)
 - [`decodeBase64()`](/reference/main/decodeBase64)
@@ -13,6 +14,7 @@ title: "@oslojs/encoding"
 - [`decodeBase64url()`](/reference/main/decodeBase64url)
 - [`decodeBase64urlIgnorePadding()`](/reference/main/decodeBase64urlIgnorePadding)
 - [`decodeHex()`](/reference/main/decodeHex)
+- [`encodeASCII()`](/reference/main/encodeASCII)
 - [`encodeBase32LowerCase()`](/reference/main/encodeBase32LowerCase)
 - [`encodeBase32LowerCaseNoPadding()`](/reference/main/encodeBase32LowerCaseNoPadding)
 - [`encodeBase32UpperCase()`](/reference/main/encodeBase32UpperCase)
@@ -23,5 +25,6 @@ title: "@oslojs/encoding"
 - [`encodeBase64urlNoPadding()`](/reference/main/encodeBase64urlNoPadding)
 - [`encodeHexLowerCase()`](/reference/main/encodeHexLowerCase)
 - [`encodeHexUpperCase()`](/reference/main/encodeHexUpperCase)
+- [`isValidASCIIEncoding()`](/reference/main/isValidASCIIEncoding)
 - _Replaced_ [`encodeBase32()`](/reference/main/encodeBase32)
 - _Replaced_ [`encodeBase32NoPadding()`](/reference/main/encodeBase32NoPadding)
